@@ -1,15 +1,16 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#define FILE_PATH "pass.csv"
 #define BUFFER_SIZE 256
 
-void list() {
-  FILE *file = fopen(FILE_PATH, "r");
+void list(const char *file_path) {
+  FILE *file = fopen(file_path, "r");
   if (file == NULL) {
     printf("No passwords stored...\n");
-    return;
+    exit(0);
   }
 
   char buffer[BUFFER_SIZE];
@@ -23,11 +24,11 @@ void list() {
   fclose(file);
 }
 
-void get(const char *key) {
-  FILE *file = fopen(FILE_PATH, "r");
+void get(const char *file_path, const char *key) {
+  FILE *file = fopen(file_path, "r");
   if (file == NULL) {
     printf("%s not found\n", key);
-    return;
+    exit(1);
   }
 
   char buffer[BUFFER_SIZE];
@@ -55,17 +56,31 @@ void get(const char *key) {
 
 int main(int argc, char *argv[]) {
   if (argc == 1) {
-    printf("Please include an argument (--list, --add, --get)\n");
-    return 1;
+    fprintf(stderr, "Please include an argument (--list, --add, --get)\n");
+    exit(1);
+  }
+
+  const char *file_path = getenv("cmppath");
+  printf("%s\n", file_path);
+  if (!file_path) {
+    fprintf(stderr, "Please set an enviornment variable `cmp_path` for where "
+                    "you want passwords stored.\n");
+    exit(1);
+  }
+
+  if (geteuid() != 0) {
+    fprintf(stderr, "I need root privelleges to show you passwords! Don't "
+                    "forget `sudo -E` to keep env variables.\n");
+    exit(1);
   }
 
   const char *cmd = argv[1];
   if (strcmp(cmd, "--list") == 0) {
-    list();
+    list(file_path);
   } else if (strcmp(cmd, "--get") == 0) {
-    get(argv[2]);
+    get(file_path, argv[2]);
   } else {
-    printf("Unsupported argument: %s\n", cmd);
+    fprintf(stderr, "Unsupported argument: %s\n", cmd);
     return 1;
   }
 
