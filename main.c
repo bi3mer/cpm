@@ -4,7 +4,16 @@
 #include <string.h>
 #include <unistd.h>
 
+#define CIPHER "sfwqefqjfwefqfwfqwfeijzxc12234" // insecure
+#define CIPHER_SIZE 30
 #define BUFFER_SIZE 256
+
+void xor_cipher(char *str) {
+  const size_t size = strlen(str);
+  for (size_t i = 0; i < size; ++i) {
+    str[i] ^= CIPHER[i % CIPHER_SIZE];
+  }
+}
 
 void list(const char *file_path) {
   FILE *file = fopen(file_path, "r");
@@ -18,6 +27,7 @@ void list(const char *file_path) {
 
   while (fgets(buffer, BUFFER_SIZE, file)) {
     token = strtok(buffer, ",");
+    xor_cipher(token);
     printf("-- %s\n", token);
   }
 
@@ -40,6 +50,7 @@ void get(const char *file_path, const char *key) {
     if (strcmp(token, key) == 0) {
       token = strtok(NULL, ",");
       token[strlen(token) - 1] = '\0';
+      xor_cipher(token);
       printf("pass: %s\n", token);
 
       found = true;
@@ -117,8 +128,11 @@ int main(int argc, char *argv[]) {
   if (strcmp(cmd, "--list") == 0) {
     list(file_path);
   } else if (argc == 3 && strcmp(cmd, "--get") == 0) {
+    xor_cipher(argv[2]);
     get(file_path, argv[2]);
   } else if (argc == 4 && strcmp(cmd, "--add") == 0) {
+    xor_cipher(argv[2]);
+    xor_cipher(argv[3]);
     add(file_path, argv[2], argv[3]);
   } else {
     fprintf(stderr, "Unsupported command: %s\n", cmd);
