@@ -51,9 +51,15 @@ void get(const char *file_path, const char *key) {
       token = strtok(NULL, ",");
       token[strlen(token) - 1] = '\0';
       xor_cipher(token);
-      printf("pass: %s\n", token);
-
       found = true;
+
+      // copy to clipbaord
+      const char proto_cmd[] = "echo '%s' | pbcopy";
+      char cmd[strlen(token) + strlen(proto_cmd) - 1];
+      sprintf(cmd, proto_cmd, token);
+      system(cmd);
+      printf("Coppied password to your clipboard.\n");
+
       break;
     }
   }
